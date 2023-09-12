@@ -1,0 +1,5 @@
+{
+    "max_bright" : 20000,
+    "min_bright" : 500,
+    "blink_period" : 0.1
+}
