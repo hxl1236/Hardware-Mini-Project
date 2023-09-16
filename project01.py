@@ -12,7 +12,7 @@ import json
 led = Pin("LED", Pin.OUT)
 button = Pin(14, Pin.IN, Pin.PULL_UP)
 
-N: int = 5
+N: int = 10
 sample_ms = 10.0
 on_ms = 500
 
