@@ -1,0 +1,8 @@
+{
+    "N" : 10,
+    "led_on_ms" : 500,
+    "buttonPin1" : 14,
+    "buttonPin2" : 10,
+    "photocellPin" : 28,
+    "photocellPause" : 2.0
+}

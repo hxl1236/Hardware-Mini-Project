@@ -7,14 +7,29 @@ import time
 import random
 import math
 import json
+import os
 
+
+def get_params(param_file: str) -> dict:
+    if not is_regular_file(param_file):
+        raise OSError(f"File {param_file} not found")
+    with open(param_file) as f:
+        params = json.load(f)
+    return params
+def is_regular_file(path: str) -> bool:
+    S_IFREG = 0x8000
+    try:
+        return os.stat(path)[0] & S_IFREG != 0
+    except OSError:
+        return False
+    
+params = get_params("project01_params.json")
+N = params["N"]
+on_ms = params["on_ms"]
+buttonPin = params["buttonPin"]
 
 led = Pin("LED", Pin.OUT)
-button = Pin(14, Pin.IN, Pin.PULL_UP)
-
-N: int = 10
-sample_ms = 10.0
-on_ms = 500
+button = Pin(buttonPin, Pin.IN, Pin.PULL_UP)
 
 
 def random_time_interval(tmin: float, tmax: float) -> float:
@@ -58,11 +73,13 @@ blinker(5)
 misses = t.count(None)
 print(f"You missed the light {misses} / {N} times")
 
+hits = N - misses
+
 t_good = [x for x in t if x is not None]
 
 # how to print the average, min, max response time?
 
-print(t_good)
+print(f"response times (ms): {t_good}")
 
 sum =  0
 for x in t_good:
@@ -72,24 +89,28 @@ if misses < N:
     avg = sum / len(t_good)
     min_t = min(t_good)
     max_t = max(t_good)
-    print(f"The average response time is {avg} milliseconds")
-    print(f"The minimum response time is {min_t} milliseconds")
-    print(f"The maximum response time is {max_t} milliseconds")
+    print(f"The average response time was {avg} ms")
+    print(f"The minimum response time was {min_t} ms")
+    print(f"The maximum response time was {max_t} ms")
 else:
     avg = "N/A"
     min_t = "N/A"
     max_t = "N/A"
 
-non_misses = N - misses
-word = str(non_misses) + "/" + str(N) + " times"
+#scoreStr = str(misses) + "/" + str(N) + " missed"
+scoreLabel = f"score (# hit out of {N})"
+
 
 dictionary = {
-    "response times (milliseconds)" : t_good,
-    "average response time (milliseconds)" : avg,
-    "minimum response time (milliseconds)" : min_t,
-    "maximum response time (milliseconds)" : max_t,
-    "score" : word
+    "response times (ms)": t_good,
+    "average response time (ms)": avg,
+    "minimum response time (ms)": min_t,
+    "maximum response time (ms)": max_t,
+    scoreLabel: hits
 }
 
+#json_object = json.dumps(dictionary, indent=4)
+
 with open("project01.json","w") as outfile:
-    json.dump(dictionary, outfile)
+    #outfile.write(json_object)
+    json.dump(dictionary, outfile, separators=(',', ':'))
