@@ -1,45 +1,95 @@
 """
-Use analog input with photocell
+Response time - single-threaded
 """
 
+from machine import Pin
 import time
-import machine
+import random
+import math
 import json
-import os
 
-led = machine.Pin("LED", machine.Pin.OUT)
-adc = machine.ADC(28)
 
-def get_params(param_file: str) -> dict:
-    """Reads parameters from a JSON file."""
+led = Pin("LED", Pin.OUT)
+button = Pin(14, Pin.IN, Pin.PULL_UP)
 
-    if not is_regular_file(param_file):
-        raise OSError(f"File {param_file} not found")
+N: int = 10
+sample_ms = 10.0
+on_ms = 500
 
-    with open(param_file) as f:
-        params = json.load(f)
 
-    return params
+def random_time_interval(tmin: float, tmax: float) -> float:
+    """return a random time interval between max and min"""
+    return random.uniform(tmin, tmax)
 
-def is_regular_file(path: str) -> bool:
-    """Checks if a regular file exists."""
 
-    S_IFREG = 0x8000
+def blinker(N: int) -> None:
+    # %% let user know game started / is over
 
-    try:
-        return os.stat(path)[0] & S_IFREG != 0
-    except OSError:
-        return False
-    
-params = get_params("exercise04.json")
+    for _ in range(N):
+        led.high()
+        time.sleep(0.1)
+        led.low()
+        time.sleep(0.1)
 
-while True:
-    value = adc.read_u16()
-    print(value)
-    duty_cycle = (value - params["min_bright"]) / (params["max_bright"] - params["min_bright"])
+
+t: list[float | None] = []
+
+blinker(3)
+
+for i in range(N):
+    time.sleep(random_time_interval(0.5, 5.0))
+
     led.high()
-    time.sleep(params["blink_period"] * duty_cycle)
-    led.low()
-    time.sleep(params["blink_period"] * (1 - duty_cycle))
-    
 
+    tic = time.ticks_ms()
+    t0 = None
+    while time.ticks_diff(time.ticks_ms(), tic) < on_ms:
+        if button.value() == 0:
+            t0 = time.ticks_diff(time.ticks_ms(), tic)
+            led.low()
+            break
+    t.append(t0)
+
+    led.low()
+
+blinker(5)
+
+# %% collate results
+misses = t.count(None)
+print(f"You missed the light {misses} / {N} times")
+
+t_good = [x for x in t if x is not None]
+
+# how to print the average, min, max response time?
+
+print(t_good)
+
+sum =  0
+for x in t_good:
+    sum += x
+
+if misses < N:
+    avg = sum / len(t_good)
+    min_t = min(t_good)
+    max_t = max(t_good)
+    print(f"The average response time is {avg} milliseconds")
+    print(f"The minimum response time is {min_t} milliseconds")
+    print(f"The maximum response time is {max_t} milliseconds")
+else:
+    avg = "N/A"
+    min_t = "N/A"
+    max_t = "N/A"
+
+non_misses = N - misses
+word = str(non_misses) + "/" + str(N) + " times"
+
+dictionary = {
+    "response times (milliseconds)" : t_good,
+    "average response time (milliseconds)" : avg,
+    "minimum response time (milliseconds)" : min_t,
+    "maximum response time (milliseconds)" : max_t,
+    "score" : word
+}
+
+with open("project01.json","w") as outfile:
+    json.dump(dictionary, outfile)
