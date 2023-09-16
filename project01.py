@@ -72,26 +72,24 @@ if misses < N:
     avg = sum / len(t_good)
     min_t = min(t_good)
     max_t = max(t_good)
-    print(f"The average response time is {avg}")
-    print(f"The minimum response time is {min_t}")
-    print(f"The maximum response time is {max_t}")
+    print(f"The average response time is {avg} milliseconds")
+    print(f"The minimum response time is {min_t} milliseconds")
+    print(f"The maximum response time is {max_t} milliseconds")
 else:
     avg = "N/A"
     min_t = "N/A"
     max_t = "N/A"
 
-word = str(misses) + "/" + str(N) + " times"
+non_misses = N - misses
+word = str(non_misses) + "/" + str(N) + " times"
 
 dictionary = {
-    "response times" : t_good,
-    "average response time" : avg,
-    "minimum response time" : min_t,
-    "maximum response time" : max_t,
+    "response times (milliseconds)" : t_good,
+    "average response time (milliseconds)" : avg,
+    "minimum response time (milliseconds)" : min_t,
+    "maximum response time (milliseconds)" : max_t,
     "score" : word
 }
 
-#json_object = json.dump(dictionary, indent=5)
-
 with open("project01.json","w") as outfile:
-    #outfile.write(json_object)
     json.dump(dictionary, outfile)
